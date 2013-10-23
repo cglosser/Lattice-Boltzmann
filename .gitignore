@@ -2,3 +2,5 @@
 *.out
 *.html
 *.swp
+html/
+latex/

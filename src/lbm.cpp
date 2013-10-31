@@ -22,7 +22,7 @@ int main() {
   double weights[] = {4.0/9, 1.0/9, 1.0/36,
                      1.0/9, 1.0/36, 1.0/9,
                       1.0/36, 1.0/9, 1.0/36};
-  const int XDIM = 5, YDIM = 5, NUM_WEIGHTS = 9;
+  const int XDIM = 3, YDIM = 3, NUM_WEIGHTS = 9;
   const vector<double> weight(weights, weights + NUM_WEIGHTS);
   Lattice3D lboltz(boost::extents[XDIM][YDIM][NUM_WEIGHTS]);
 
@@ -34,16 +34,24 @@ int main() {
     }
   }
 
-  lboltz[XDIM/2][YDIM/2][1] = 1;
-  printLattice(lboltz, XDIM, YDIM, 1);
-  cout << endl;
+  lboltz[XDIM/2][YDIM/2][2] = 1;
+  printLattice(lboltz, XDIM, YDIM, 2);
 
-  for(int t = 0; t < 10; t++) {
-    streamingUpdate(lboltz, XDIM, YDIM, NUM_WEIGHTS);
-    printLattice(lboltz, XDIM, YDIM, 1);
-    cout << endl;
-  }
+  streamingUpdate(lboltz, XDIM, YDIM, NUM_WEIGHTS);
+  printLattice(lboltz, XDIM, YDIM, 2);
 
+  streamingUpdate(lboltz, XDIM, YDIM, NUM_WEIGHTS);
+  printLattice(lboltz, XDIM, YDIM, 6);
+
+  streamingUpdate(lboltz, XDIM, YDIM, NUM_WEIGHTS);
+  printLattice(lboltz, XDIM, YDIM, 6);
+
+  streamingUpdate(lboltz, XDIM, YDIM, NUM_WEIGHTS);
+  printLattice(lboltz, XDIM, YDIM, 6);
+
+  streamingUpdate(lboltz, XDIM, YDIM, NUM_WEIGHTS);
+  printLattice(lboltz, XDIM, YDIM, 6);
+  printLattice(lboltz, XDIM, YDIM, 2);
   return 0;
 }
 
@@ -55,12 +63,26 @@ void streamingUpdate(Lattice3D &lb, const int XDIM, const int YDIM,
     for(int y = 0; y < YDIM; y++) {
       for(int w = 0; w < NUM_WEIGHTS; w++) {
         Eigen::Vector2d dr(dirToSteps(w));
-        // Periodic boundary conditions, for the time being
-        // off the edge
-        int xprime = x + int(dr[0]), yprime = y + int(dr[0]);
-        xprime = mod(xprime, XDIM); yprime = mod(yprime, YDIM);
+        int xprime = x + int(dr[0]), yprime = y + int(dr[1]), wprime = w;
+        
+        //Periodic in x
+        if(xprime < 0) {
+          xprime += XDIM;
+        } else if (xprime >= XDIM) {
+          xprime -= XDIM;
+        }
 
-        temp_lattice[xprime][yprime][w] = lb[x][y][w];
+        if(yprime < 0) {
+          xprime = x;     // Don't change node
+          yprime = y;     
+          wprime = w - 4; // Only bounce back density
+        } else if (yprime >= YDIM) {
+          xprime = x;     
+          yprime = y;     //y' = y assumes dy can be at most 1
+          wprime = w + 4;
+        }
+
+        temp_lattice[xprime][yprime][wprime] = lb[x][y][w];
       }
     }
   }
@@ -101,16 +123,6 @@ void collisionUpdate(const int XDIM, const int YDIM,
 
 }
 
-
-/**
- * \brief Convert a direction index into displacements on the lattice
- *
- * \param[in]  w  Direction value to convert
- * \param[out] dx x shift on lattice
- * \param[out] dy y shift on lattice
- *
- * \return Nothing
- */
 Eigen::Vector2d dirToSteps(const int w) {
   switch(w) {
     default:
@@ -151,6 +163,7 @@ void printLattice(const Lattice3D &lb, const int XDIM, const int YDIM, const int
     }
     cout << endl;
   }
+  cout << endl;
 }
 
 double latticeDistance(int direction) {

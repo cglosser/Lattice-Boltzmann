@@ -22,36 +22,25 @@ int main() {
   double weights[] = {4.0/9, 1.0/9, 1.0/36,
                      1.0/9, 1.0/36, 1.0/9,
                       1.0/36, 1.0/9, 1.0/36};
-  const int XDIM = 3, YDIM = 3, NUM_WEIGHTS = 9;
+  const int XDIM = 41, YDIM = 21, NUM_WEIGHTS = 9;
   const vector<double> weight(weights, weights + NUM_WEIGHTS);
   Lattice3D lboltz(boost::extents[XDIM][YDIM][NUM_WEIGHTS]);
 
   for(int y = YDIM - 1; y >= 0; y--) {
     for(int x = 0; x < XDIM; x++) {
       for(int w = 0; w < NUM_WEIGHTS; w++) {
-        lboltz[x][y][w] = 0;
+        lboltz[x][y][w] = 1;
+        if(x == XDIM/2 && y == YDIM/2) lboltz[x][y][1] = 3;
       }
     }
   }
 
-  lboltz[XDIM/2][YDIM/2][2] = 1;
-  printLattice(lboltz, XDIM, YDIM, 2);
+  for(int t = 0; t < 3000; t++) {
+    printLattice(lboltz, XDIM, YDIM, NUM_WEIGHTS);
+    streamingUpdate(lboltz, XDIM, YDIM, NUM_WEIGHTS);
+    collisionUpdate(XDIM, YDIM, NUM_WEIGHTS, weight, lboltz);
+  }
 
-  streamingUpdate(lboltz, XDIM, YDIM, NUM_WEIGHTS);
-  printLattice(lboltz, XDIM, YDIM, 2);
-
-  streamingUpdate(lboltz, XDIM, YDIM, NUM_WEIGHTS);
-  printLattice(lboltz, XDIM, YDIM, 6);
-
-  streamingUpdate(lboltz, XDIM, YDIM, NUM_WEIGHTS);
-  printLattice(lboltz, XDIM, YDIM, 6);
-
-  streamingUpdate(lboltz, XDIM, YDIM, NUM_WEIGHTS);
-  printLattice(lboltz, XDIM, YDIM, 6);
-
-  streamingUpdate(lboltz, XDIM, YDIM, NUM_WEIGHTS);
-  printLattice(lboltz, XDIM, YDIM, 6);
-  printLattice(lboltz, XDIM, YDIM, 2);
   return 0;
 }
 
@@ -156,14 +145,17 @@ Eigen::Vector2d dirToSteps(const int w) {
   }
 }
 
-void printLattice(const Lattice3D &lb, const int XDIM, const int YDIM, const int w) {
+void printLattice(const Lattice3D &lb, const int XDIM, const int YDIM, const int NUM_WEIGHTS) {
   for(int y = YDIM - 1; y >= 0; y--) {
     for(int x = 0; x < XDIM; x++) {
-      cout << lb[x][y][w] << " ";
+      double total = 0;
+      for(int z = 0; z < NUM_WEIGHTS; z++) total += lb[x][y][z];
+      cout << total;
+      if (x != XDIM - 1) cout << ",";
     }
     cout << endl;
   }
-  cout << endl;
+  //cout << endl;
 }
 
 double latticeDistance(int direction) {

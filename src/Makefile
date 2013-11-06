@@ -3,7 +3,7 @@ CFLAGS = -Wall -O3 -fstrict-aliasing -std=c++0x
 CFLAGS += $(shell pkg-config --cflags eigen3)
 LIBS += $(shell pkg-config --libs eigen3)
 LDFLAGS =
-OBJECTS = lbm.o
+OBJECTS = lattice.o driver.o
 PROGRAM = lbm.out
 
 COMPILE = $(CC) $(CFLAGS)

@@ -1,20 +1,18 @@
 #include "lattice.h"
 using namespace std;
 
-double d2q9_weights[] = {4.0/9, 1.0/9, 1.0/36,
-                      1.0/9, 1.0/36, 1.0/9,
-                      1.0/36, 1.0/9, 1.0/36};
+double d2q9_weights[] = {4.0/9, 1.0/9, 1.0/36, 1.0/9, 1.0/36, 1.0/9, 1.0/36, 1.0/9, 1.0/36};
 
-Lattice::Lattice(int x_size, int y_size):
+Lattice::Lattice(const int x_size, const int y_size):
     XDIM(x_size), YDIM(y_size), NUM_WEIGHTS(9), 
     weight(d2q9_weights, d2q9_weights + NUM_WEIGHTS) {
-  f_density.resize(boost::extents[XDIM][YDIM][9]);
-  push_density.resize(boost::extents[XDIM][YDIM][9]);
-  neighbors.resize(boost::extents[XDIM][YDIM][9]);
+  f_density.resize(boost::extents[XDIM][YDIM][NUM_WEIGHTS]);
+  push_density.resize(boost::extents[XDIM][YDIM][NUM_WEIGHTS]);
+  neighbors.resize(boost::extents[XDIM][YDIM][NUM_WEIGHTS]);
 
   for(int x = 0; x < XDIM; x++) {
     for(int y = 0; y < YDIM; y++) {
-      for(int n = 0; n < 9; n++) {
+      for(int n = 0; n < NUM_WEIGHTS; n++) {
         f_density[x][y][n] = 1;
         if(x == XDIM/2 && y == YDIM/2 && n == 1) f_density[x][y][n] = 2;
       }
@@ -26,9 +24,9 @@ Lattice::Lattice(int x_size, int y_size):
   return;
 }
 
-double Lattice::density(int x, int y) {
+double Lattice::density(const int x, const int y) {
   double rho = 0;
-  for(int n = 0; n < 9; n++) rho += f_density[x][y][n];
+  for(int n = 0; n < NUM_WEIGHTS; n++) rho += f_density[x][y][n];
   return rho;
 }
 
@@ -49,11 +47,10 @@ void Lattice::print(ostream &os) {
   return;
 }
 
-
 void Lattice::buildNeighbors() {
   for(int x = 0; x < XDIM; x++) {
     for(int y = 0; y < YDIM; y++) {
-      for(int n = 0; n < 9; n++) {
+      for(int n = 0; n < NUM_WEIGHTS; n++) {
         int dx, dy;
         directionToSteps(n, dx, dy); // Set the values of dx & dy from n
 
@@ -80,7 +77,7 @@ void Lattice::buildNeighbors() {
 void Lattice::streamingUpdate() {
   for(int x = 0; x < XDIM; x++) {
     for(int y = 0; y < YDIM; y++) {
-      for(int n = 0; n < 9; n++) {
+      for(int n = 0; n < NUM_WEIGHTS; n++) {
         *neighbors[x][y][n] = f_density[x][y][n];
       }
     }
@@ -88,6 +85,7 @@ void Lattice::streamingUpdate() {
   f_density = push_density;
   return;
 }
+
 
 void directionToSteps(const int n, int &dx, int &dy) {
   if (n == 0) {
@@ -99,7 +97,3 @@ void directionToSteps(const int n, int &dx, int &dy) {
     dy = round(sin(theta));
   }
 }
-        
-
-
-

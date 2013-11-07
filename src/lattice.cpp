@@ -1,8 +1,13 @@
 #include "lattice.h"
 using namespace std;
 
-Lattice::Lattice(int x_size, int y_size) {
-  XDIM = x_size; YDIM = y_size;
+double d2q9_weights[] = {4.0/9, 1.0/9, 1.0/36,
+                      1.0/9, 1.0/36, 1.0/9,
+                      1.0/36, 1.0/9, 1.0/36};
+
+Lattice::Lattice(int x_size, int y_size):
+    XDIM(x_size), YDIM(y_size), NUM_WEIGHTS(9), 
+    weight(d2q9_weights, d2q9_weights + NUM_WEIGHTS) {
   f_density.resize(boost::extents[XDIM][YDIM][9]);
   push_density.resize(boost::extents[XDIM][YDIM][9]);
   neighbors.resize(boost::extents[XDIM][YDIM][9]);

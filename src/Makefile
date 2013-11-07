@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -O3 -fstrict-aliasing -std=c++0x
+CFLAGS = -Wall -O3 -fstrict-aliasing -std=c++11 -g
 CFLAGS += $(shell pkg-config --cflags eigen3)
 LIBS += $(shell pkg-config --libs eigen3)
 LDFLAGS =
@@ -12,7 +12,7 @@ LINK 		= $(CC) $(LDFALGS)
 $(PROGRAM): $(OBJECTS)
 	$(LINK) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-%.o:%.cpp
+%.o:%.cpp %.h
 	$(COMPILE) $(CFLAGS) -c $<
 
 .PHONY: clean

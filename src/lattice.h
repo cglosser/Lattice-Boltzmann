@@ -17,7 +17,8 @@ class Lattice {
 
  private:
 
-  int XDIM, YDIM;
+  const int XDIM, YDIM, NUM_WEIGHTS;
+  const std::vector<double> weight;
   array3D f_density, push_density;
   boost::multi_array<double*, 3> neighbors;
   void buildNeighbors();

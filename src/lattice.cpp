@@ -11,6 +11,7 @@ Lattice::Lattice(int x_size, int y_size) {
     for(int y = 0; y < YDIM; y++) {
       for(int n = 0; n < 9; n++) {
         f_density[x][y][n] = 1;
+        if(x == XDIM/2 && y == YDIM/2 && n == 1) f_density[x][y][n] = 2;
       }
     }
   }
@@ -19,6 +20,30 @@ Lattice::Lattice(int x_size, int y_size) {
 
   return;
 }
+
+double Lattice::density(int x, int y) {
+  double rho = 0;
+  for(int n = 0; n < 9; n++) rho += f_density[x][y][n];
+  return rho;
+}
+
+void Lattice::update() {
+  streamingUpdate();
+  //collisionUpdate();
+  return;
+}
+
+void Lattice::print(ostream &os) {
+  for(int y = YDIM - 1; y >= 0; y--) {
+    for(int x = 0; x < XDIM; x++) {
+      os << density(x, y);
+      if (x < XDIM - 1) cout << ",";
+    }
+    os << endl;
+  }
+  return;
+}
+
 
 void Lattice::buildNeighbors() {
   for(int x = 0; x < XDIM; x++) {
@@ -47,6 +72,17 @@ void Lattice::buildNeighbors() {
   return;
 }
 
+void Lattice::streamingUpdate() {
+  for(int x = 0; x < XDIM; x++) {
+    for(int y = 0; y < YDIM; y++) {
+      for(int n = 0; n < 9; n++) {
+        *neighbors[x][y][n] = f_density[x][y][n];
+      }
+    }
+  }
+  f_density = push_density;
+  return;
+}
 
 void directionToSteps(const int n, int &dx, int &dy) {
   if (n == 0) {

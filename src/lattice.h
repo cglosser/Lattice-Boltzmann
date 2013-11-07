@@ -11,14 +11,18 @@ class Lattice {
  public:
 
   Lattice(int, int);
-  void buildNeighbors();
+  double density(int, int);
+  void update();
+  void print(std::ostream &);
 
+ private:
 
   int XDIM, YDIM;
   array3D f_density, push_density;
   boost::multi_array<double*, 3> neighbors;
+  void buildNeighbors();
+  void streamingUpdate();
 
- private:
 
 };
 

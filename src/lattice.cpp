@@ -1,7 +1,7 @@
 #include "lattice.h"
 using namespace std;
 
-#define tau 1
+#define tau 1 //Refactor this to be part of the class...
 
 double d2q9_weights[] = {1.0/36, 1.0/9, 1.0/36, 1.0/9, 4.0/9, 1.0/9, 1.0/36, 1.0/9, 1.0/36};
 
@@ -16,7 +16,10 @@ Lattice::Lattice(const int x_size, const int y_size):
     for(int y = 0; y < YDIM; y++) {
       for(int n = 1; n <= NUM_WEIGHTS; n++) {
         f_density[x][y][n] = 1;
-        if(x == XDIM/2 && y == YDIM/2 && n == 6) f_density[x][y][n] = 2;
+        if(x == 20 && y == YDIM/2 && n == 4) f_density[x][y][n] = 7;
+        if(x >= 0 && x <= YDIM/2 && y >= YDIM/4 && y <= 3*YDIM/4) {
+          f_density[x][y][5] = 0;
+        }
       }
     }
   }
@@ -65,6 +68,10 @@ void Lattice::buildNeighbors() {
         if(yprime < 0 || yprime >= YDIM) {
           xprime = x; yprime = y; 
           nprime = (NUM_WEIGHTS + 1) - n;
+        }
+
+        if(f_density[xprime][yprime][5] == 0) {
+          xprime = x; yprime = y; nprime = (NUM_WEIGHTS + 1) - n;
         }
 
         neighbors[x][y][n] = &push_density[xprime][yprime][nprime];

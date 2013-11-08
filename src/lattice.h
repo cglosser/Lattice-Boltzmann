@@ -51,7 +51,7 @@ class Lattice {
    */
   void print(std::ostream &os);
 
- //private:
+ private:
 
   const int XDIM, YDIM, NUM_WEIGHTS;
 
@@ -79,7 +79,8 @@ class Lattice {
 
   /**
    * @brief Generate an array of references to neighboring sites in a copy of
-   * the canonical lattice.*/
+   * the canonical lattice.
+   * @todo Refactor to use integer references, not pointers*/
   void buildNeighbors();
 
   /**

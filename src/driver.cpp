@@ -2,9 +2,9 @@
 using namespace std;
 
 int main() {
-  Lattice myLat(5,5);
+  Lattice myLat(101,21);
 
-  for(int time = 0; time < 3000; time++) {
+  for(int time = 0; time < 1000; time++) {
     myLat.print(cout);
     myLat.update();
   }

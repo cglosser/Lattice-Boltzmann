@@ -11,14 +11,20 @@
  */
 typedef boost::multi_array<double, 3> array3D;
 
-  /**
-   * @brief   Standard two-dimensional Boltzmann lattice.
-   * @details Maintains a record of the density at each site (for each velocity
-   * direction) and each site's neighbors as separate arrays. Also evolves the
-   * system in time through an update method. 
-   * @todo Implement subclassing to allow D2Q7, D3Q* lattices
-   * @todo Swap multi-dimensional arrays for vectors of density arrays
-   */
+/** @brief Simplify a boost::multi_array range object. The directional
+ * components of the lattice are most easily indexed through [1:NUM_WEIGHTS +
+ * 1), so it is convenient for the multi_array to assume the same range.
+ */
+typedef boost::multi_array_types::extent_range range;
+
+/**
+ * @brief   Standard two-dimensional Boltzmann lattice.
+ * @details Maintains a record of the density at each site (for each velocity
+ * direction) and each site's neighbors as separate arrays. Also evolves the
+ * system in time through an update method. 
+ * @todo Implement subclassing to allow D2Q7, D3Q* lattices
+ * @todo Swap multi-dimensional arrays for vectors of density arrays
+ */
 class Lattice {
  public:
 
@@ -45,7 +51,7 @@ class Lattice {
    */
   void print(std::ostream &os);
 
- private:
+ //private:
 
   const int XDIM, YDIM, NUM_WEIGHTS;
 
@@ -98,13 +104,25 @@ class Lattice {
 
 /**
  * @brief   Convert a direction number to +-1 integer steps on a lattice.
- * @details Uses rounding of trigonometric functions to give unit steps for a specified direction. Because of the trigonometry, this function will be MUCH slower than necessary and should be avoided for anything except initialization.
- * @param[in] n direction
- * @param[out] dx step in the x direction
- * @param[out] dy step in the y direction
- * @todo Reimplement with a more efficient ordering. 1:NUM_STEPS with a
- * top-down looks more promising than using 0:NUM_STEPS-1 counter clockwise
+ * @details Converts an integer in the range [1, NUM_WEIGHTS] to unit steps on
+ * the lattice. For the D2Q9 lattice, the directions are as follows: \n
+ * <pre>
+ * 1   2   3
+ *   \ | /  
+ * 4 - 5 - 6
+ *   / | \
+ * 7   8   9
+ * </pre>
+ * so that the reverse of any given direction becomes simply
+ * (NUM_WEIGHTS + 1) - n
+ * @throws  domain_error if the input does not correspond to one of the nearest
+ * neighbor directions
+ * @returns A two dimensional integer containing steps along x and y. This
+ * vector must be cast to a double for general purpose computations!
+ *
+ * @todo Buld into Lattice class/subclasses (steps on the lattice are part of
+ * the lattice geometry and thus this function should be a class member.)
  */
-Eigen::Vector2d directionToSteps(const int n);
+Eigen::Vector2i directionToSteps(const int n);
 
 #endif

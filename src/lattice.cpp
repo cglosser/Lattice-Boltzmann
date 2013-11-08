@@ -14,7 +14,7 @@ Lattice::Lattice(const int x_size, const int y_size):
     for(int y = 0; y < YDIM; y++) {
       for(int n = 0; n < NUM_WEIGHTS; n++) {
         f_density[x][y][n] = 1;
-        if(x == XDIM/2 && y == YDIM/2 && n == 1) f_density[x][y][n] = 2;
+        if(x == XDIM/2 && y == YDIM/2 && n == 0) f_density[x][y][n] = 2;
       }
     }
   }
@@ -32,7 +32,7 @@ double Lattice::density(const int x, const int y) {
 
 void Lattice::update() {
   streamingUpdate();
-  //collisionUpdate();
+  collisionUpdate();
   return;
 }
 
@@ -51,10 +51,9 @@ void Lattice::buildNeighbors() {
   for(int x = 0; x < XDIM; x++) {
     for(int y = 0; y < YDIM; y++) {
       for(int n = 0; n < NUM_WEIGHTS; n++) {
-        int dx, dy;
-        directionToSteps(n, dx, dy); // Set the values of dx & dy from n
+        Eigen::Vector2d dr(directionToSteps(n));
+        int xprime = x + int(dr[0]), yprime = y + int(dr[1]), nprime = n;
 
-        int xprime = x + dx, yprime = y + dy, nprime = n;
         if(xprime < 0) {
           xprime += XDIM;
         } else if(xprime >= XDIM) {
@@ -86,14 +85,44 @@ void Lattice::streamingUpdate() {
   return;
 }
 
+void Lattice::collisionUpdate() {
+  for(int x = 0; x < XDIM; x++) {
+    for(int y = 0; y < YDIM; y++) {
+      Eigen::Vector2d macro_vel(0,0);
+      double density = 0;
 
-void directionToSteps(const int n, int &dx, int &dy) {
+      for(int n = 0; n < NUM_WEIGHTS; n++) {
+        macro_vel += f_density[x][y][n]*directionToSteps(n);
+        density += f_density[x][y][n];
+      }
+
+      if(density != 0) {
+        macro_vel /= density;
+      } else {
+        continue; // No fluid at node, nothing further to compute
+      }
+
+      for(int n = 0; n < NUM_WEIGHTS; n++) {
+        double e_dot_u = directionToSteps(n).dot(macro_vel);
+        double equilibrium = (1 + 3*e_dot_u + 9.0/2*pow(e_dot_u,2)
+          - 3.0/2*macro_vel.squaredNorm())*weight[n]*density; // c = 1
+
+        f_density[x][y][n] -= f_density[x][y][n] - equilibrium;
+      }
+    }
+  }
+
+  return;
+}
+
+
+Eigen::Vector2d directionToSteps(const int n) {
   if (n == 0) {
-    dx = dy = 0;
+    return Eigen::Vector2d(0, 0);
   } else {
     int r = n - 1;
     double theta = r*atan(1.0); // equals 2*pi*r/8
-    dx = round(cos(theta)); 
-    dy = round(sin(theta));
+    int dx = round(cos(theta)) + 0, dy = round(sin(theta)) + 0;
+    return Eigen::Vector2d(dx, dy);
   }
 }

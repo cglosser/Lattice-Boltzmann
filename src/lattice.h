@@ -105,6 +105,6 @@ class Lattice {
  * @todo Reimplement with a more efficient ordering. 1:NUM_STEPS with a
  * top-down looks more promising than using 0:NUM_STEPS-1 counter clockwise
  */
-void directionToSteps(const int n, int &dx, int&dy);
+Eigen::Vector2d directionToSteps(const int n);
 
 #endif

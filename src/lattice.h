@@ -9,7 +9,7 @@
 /**
  * @brief Define a 2d + velocities array for D2Q9 lattice geometries.
  */
-typedef boost::multi_array<double, 3> array3D;
+typedef boost::multi_array<double, 2> array2D;
 
 /** @brief Simplify a boost::multi_array range object. The directional
  * components of the lattice are most easily indexed through [1:NUM_WEIGHTS +
@@ -33,9 +33,9 @@ class Lattice {
    * appropriate neighbor list with reference entries. */
   Lattice(const int, const int);
 
-  /** @brief Compute and return the particle density at site (x,y) as the sum
+  /** @brief Compute and return the particle density at site i as the sum
    * of the Boltzmann densities. */
-  double density(const int, const int);
+  double density(const int);
 
   /** @brief Perform a stream & collision update to evolve the system by one
    * timestep. */
@@ -51,9 +51,19 @@ class Lattice {
    */
   void print(std::ostream &os);
 
- //private:
+  /**
+   * @brief Convert an index to coordinates on the lattice.
+   */
+  Eigen::Vector2i idx2coord(const int);
 
-  const int XDIM, YDIM, NUM_WEIGHTS;
+  /**
+   * @brief Convert lattice coordinates to a list index.
+   */
+  int coord2idx(const Eigen::Vector2i);
+
+ private:
+
+  const int XDIM, YDIM, NUM_SITES, NUM_WEIGHTS;
 
   /** @brief Directioinal weights for the equilibrium value of the D2Q9 lattice 
    */
@@ -61,7 +71,7 @@ class Lattice {
 
   /** @brief Array containing the Boltzmann densities for every node in the
    * lattice. */
-  array3D f_density;
+  array2D f_density;
 
   /** 
    * @brief   Array used to hold temporary Boltzmann density values during the
@@ -71,11 +81,11 @@ class Lattice {
    * neighbor list can contain valid references to equivalent lattice
    * locations.
    */
-  array3D  push_density;
+  array2D  push_density;
 
   /** @brief 3d array of references to equivalent lattice locations in
    * push_density */
-  boost::multi_array<double*, 3> neighbors;
+  boost::multi_array<double, 2> neighbors;
 
   /**
    * @brief Generate an array of references to neighboring sites in a copy of

@@ -6,29 +6,30 @@ using namespace std;
 double d2q9_weights[] = {1.0/36, 1.0/9, 1.0/36, 1.0/9, 4.0/9, 1.0/9, 1.0/36, 1.0/9, 1.0/36};
 
 Lattice::Lattice(const int x_size, const int y_size):
-    XDIM(x_size), YDIM(y_size), NUM_WEIGHTS(9), 
+    XDIM(x_size), YDIM(y_size), NUM_SITES(XDIM*YDIM), NUM_WEIGHTS(9), 
     weight(d2q9_weights, d2q9_weights + NUM_WEIGHTS) {
-  f_density.resize(boost::extents[XDIM][YDIM][range(1,NUM_WEIGHTS + 1)]);
-  push_density.resize(boost::extents[XDIM][YDIM][range(1, NUM_WEIGHTS + 1)]);
-  neighbors.resize(boost::extents[XDIM][YDIM][range(1, NUM_WEIGHTS + 1)]);
+  f_density.resize(
+      boost::extents[range(-2, NUM_SITES)][range(1, NUM_WEIGHTS+1)]);
+  push_density.resize(
+      boost::extents[range(-2, NUM_SITES)][range(1, NUM_WEIGHTS+1)]);
+  neighbors.resize(
+      boost::extents[range(-2, NUM_SITES)][range(1, NUM_WEIGHTS+1)]);
 
-  for(int x = 0; x < XDIM; x++) {
-    for(int y = 0; y < YDIM; y++) {
-      for(int n = 1; n <= NUM_WEIGHTS; n++) {
-        f_density[x][y][n] = 1;
-        if(x == XDIM/2 && y == YDIM/2 && n == 6) f_density[x][y][n] = 2;
-      }
+  for(int site = 0; site < NUM_SITES; site++) {
+    for(int n = 1; n <= NUM_WEIGHTS; n++) {
+      f_density[site][n] = 1;
     }
   }
+  f_density[NUM_SITES/2][6] = 3;
 
   buildNeighbors();
 
   return;
 }
 
-double Lattice::density(const int x, const int y) {
+double Lattice::density(const int site) {
   double rho = 0;
-  for(int n = 1; n <= NUM_WEIGHTS; n++) rho += f_density[x][y][n];
+  for(int n = 1; n <= NUM_WEIGHTS; n++) rho += f_density[site][n];
   return rho;
 }
 
@@ -39,47 +40,56 @@ void Lattice::update() {
 }
 
 void Lattice::print(ostream &os) {
-  for(int y = YDIM - 1; y >= 0; y--) {
-    for(int x = 0; x < XDIM; x++) {
-      os << density(x, y);
-      if (x < XDIM - 1) cout << ",";
+  for(int site = 0; site < NUM_SITES; site++) {
+    os << density(site);
+    if(site % XDIM == 0) {
+      cout << endl;
+    } else {
+      cout << ",";
     }
-    os << endl;
   }
   return;
 }
 
+Eigen::Vector2i Lattice::idx2coord(const int idx) {
+  int x = idx % XDIM, y = idx/XDIM;
+  return Eigen::Vector2i(x, y);
+}
+
+int Lattice::coord2idx(Eigen::Vector2i r) {
+  return r[0] + r[1]*XDIM;
+}
+
 void Lattice::buildNeighbors() {
-  for(int x = 0; x < XDIM; x++) {
-    for(int y = 0; y < YDIM; y++) {
-      for(int n = 1; n <= NUM_WEIGHTS; n++) {
-        Eigen::Vector2i dr(directionToSteps(n));
-        int xprime = x + dr[0], yprime = y + dr[1], nprime = n;
+  for(int site = 0; site < NUM_SITES; site++) {
+    Eigen::Vector2i r(idx2coord(site));
+    for(int n = 1; n <= NUM_WEIGHTS; n++) {
+      Eigen::Vector2i dr = directionToSteps(n), rprime = r + dr;
 
-        if(xprime < 0) {
-          xprime += XDIM;
-        } else if(xprime >= XDIM) {
-          xprime -= XDIM;
-        }
-
-        if(yprime < 0 || yprime >= YDIM) {
-          xprime = x; yprime = y; 
-          nprime = (NUM_WEIGHTS + 1) - n;
-        }
-
-        neighbors[x][y][n] = &push_density[xprime][yprime][nprime];
+      if(rprime[0] < 0) {
+        rprime += Eigen::Vector2i(XDIM,0);
+      } else if(rprime[0]>= XDIM) {
+        rprime -= Eigen::Vector2i(XDIM,0);
       }
+
+      neighbors[coord2idx(r)][n] = coord2idx(rprime); 
     }
+  }
+
+  for(int site = 0; site < NUM_SITES; site++) {
+    cout << site << endl;
+    for(int n = 1; n <= NUM_WEIGHTS; n++) {
+      cout << neighbors[site][n] << "  ";
+    }
+    cout << endl << endl;
   }
   return;
 }
 
 void Lattice::streamingUpdate() {
-  for(int x = 0; x < XDIM; x++) {
-    for(int y = 0; y < YDIM; y++) {
-      for(int n = 1; n <= NUM_WEIGHTS; n++) {
-        *neighbors[x][y][n] = f_density[x][y][n];
-      }
+  for(int site = 0; site < NUM_SITES; site++) {
+    for(int n = 1; n <= NUM_WEIGHTS; n++) {
+      push_density[neighbors[site][n]][n] = f_density[site][n];
     }
   }
   f_density = push_density;
@@ -87,26 +97,24 @@ void Lattice::streamingUpdate() {
 }
 
 void Lattice::collisionUpdate() {
-  for(int x = 0; x < XDIM; x++) {
-    for(int y = 0; y < YDIM; y++) {
-      Eigen::Vector2d macro_vel(0,0);
-      double density = 0;
+  for(int site = 0; site < NUM_SITES; site++) {
+    Eigen::Vector2d macro_vel(0,0);
+    double density = 0;
 
-      for(int n = 1; n <= NUM_WEIGHTS; n++) {
-        macro_vel += f_density[x][y][n]*(directionToSteps(n).cast<double>());
-        density += f_density[x][y][n];
-      }
+    for(int n = 1; n <= NUM_WEIGHTS; n++) {
+      macro_vel += f_density[site][n]*(directionToSteps(n).cast<double>());
+      density += f_density[site][n];
+    }
 
-      if(density != 0) macro_vel /= density;
+    if(density != 0) macro_vel /= density;
 
-      for(int n = 1; n <= NUM_WEIGHTS; n++) {
-        double e_dot_u = directionToSteps(n).cast<double>().dot(macro_vel);
-        double equilibrium = (1 + 3*e_dot_u + (9.0/2)*pow(e_dot_u,2)
-          - (3.0/2)*macro_vel.squaredNorm())*weight[n - 1]*density; // c = 1
+    for(int n = 1; n <= NUM_WEIGHTS; n++) {
+      double e_dot_u = directionToSteps(n).cast<double>().dot(macro_vel);
+      double equilibrium = (1 + 3*e_dot_u + (9.0/2)*pow(e_dot_u,2)
+        - (3.0/2)*macro_vel.squaredNorm())*weight[n - 1]*density; // c = 1
                //weight is a std::vector here^, hence n - 1
         
-        f_density[x][y][n] -= 1/tau*(f_density[x][y][n] - equilibrium);
-      }
+      f_density[site][n] -= 1/tau*(f_density[site][n] - equilibrium);
     }
   }
 

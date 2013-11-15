@@ -61,7 +61,7 @@ class Lattice {
    */
   int coord2idx(const Eigen::Vector2i);
 
- private:
+ //private:
 
   const int XDIM, YDIM, NUM_SITES, NUM_WEIGHTS;
 
@@ -85,7 +85,7 @@ class Lattice {
 
   /** @brief 3d array of references to equivalent lattice locations in
    * push_density */
-  boost::multi_array<double, 2> neighbors;
+  boost::multi_array<int, 2> neighbors;
 
   /**
    * @brief Generate an array of references to neighboring sites in a copy of

@@ -4,11 +4,13 @@ using namespace std;
 int main() {
   Lattice myLat(5,5);
 
-  for(int time = 0; time < 3000; time++) {
-    myLat.print(cout);
-    myLat.update();
-  }
-  myLat.print(cout);
 
+  for(int s = 0; s < myLat.NUM_SITES; s++) {
+    cout << s << endl;
+    for(int n = 1; n < myLat.NUM_WEIGHTS; s++) {
+      cout << myLat.neighbors[s][n] << "  ";
+    }
+    cout << endl;
+  }
   return 0;
 }

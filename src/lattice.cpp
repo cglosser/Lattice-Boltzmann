@@ -63,26 +63,26 @@ int Lattice::coord2idx(Eigen::Vector2i r) {
 void Lattice::buildNeighbors() {
   for(int site = 0; site < NUM_SITES; site++) {
     Eigen::Vector2i r(idx2coord(site));
-    for(int n = 1; n <= NUM_WEIGHTS; n++) {
-      Eigen::Vector2i dr = directionToSteps(n), rprime = r + dr;
-
-      if(rprime[0] < 0) {
-        rprime += Eigen::Vector2i(XDIM,0);
-      } else if(rprime[0]>= XDIM) {
-        rprime -= Eigen::Vector2i(XDIM,0);
-      }
-
-      neighbors[coord2idx(r)][n] = coord2idx(rprime); 
-    }
-  }
-
-  for(int site = 0; site < NUM_SITES; site++) {
     cout << site << endl;
+
     for(int n = 1; n <= NUM_WEIGHTS; n++) {
-      cout << neighbors[site][n] << "  ";
+
+      Eigen::Vector2i r = idx2coord(site), dr = directionToSteps(n),
+                      rprime = r + dr;
+
+      rprime[0] = (rprime[0] <  0    ? rprime[0] + XDIM : rprime[0]);
+      rprime[0] = (rprime[0] >= XDIM ? rprime[0] - XDIM : rprime[0]);
+
+      rprime[1] = (rprime[1] <  0    ? rprime[1] + XDIM : rprime[1]);
+      rprime[1] = (rprime[1] >= XDIM ? rprime[1] - XDIM : rprime[1]);
+
+      neighbors[site][n] = coord2idx(rprime);
+      cout << coord2idx(rprime) << "  ";
+
     }
     cout << endl << endl;
   }
+
   return;
 }
 

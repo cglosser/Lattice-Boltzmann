@@ -23,7 +23,6 @@ typedef boost::multi_array_types::extent_range range;
  * direction) and each site's neighbors as separate arrays. Also evolves the
  * system in time through an update method. 
  * @todo Implement subclassing to allow D2Q7, D3Q* lattices
- * @todo Swap multi-dimensional arrays for vectors of density arrays
  */
 class Lattice {
  public:
@@ -61,9 +60,14 @@ class Lattice {
    */
   int coord2idx(const Eigen::Vector2i);
 
- //private:
+ private:
 
-  const int XDIM, YDIM, NUM_SITES, NUM_WEIGHTS;
+  enum state {INACTIVE, ACTIVE};
+
+  const int XDIM,        ///< Length of lattice in the x dimension
+            YDIM,        ///< Length of lattice in the y dimension
+            NUM_SITES,   ///< Total number of sites
+            NUM_WEIGHTS; ///< Number of discretized momentum directions
 
   /** @brief Directioinal weights for the equilibrium value of the D2Q9 lattice 
    */
@@ -83,22 +87,23 @@ class Lattice {
    */
   array2D  push_density;
 
-  /** @brief 3d array of references to equivalent lattice locations in
-   * push_density */
+  /** @brief Array of indices to neighboring sites. The second dimension runs
+   * from [1, NUM_WEIGHTS].
+   */
   boost::multi_array<int, 2> neighbors;
 
   /** @brief Generate an array integers corresponding to neighbor nodes. By
    * default, assumes periodic boundary conditions in x & y -- rigid boundaries
    * must be added by deactivating edge nodes.
    */
-   void buildNeighbors();
+  void buildNeighbors();
 
   /** @brief Perform the streaming step of an update wherein lattice values
    * move along their velocity components to adjacent neighbors.
    * @details The values must stream simultaneously, in that they move to a
-   * secondary lattice prior to getting copied back to the original.
-   * @todo Implement detection of NULL neighbor references to handle
-   * arbitrary-direction bouncebacks.
+   * secondary lattice prior to getting copied back to the original.  @todo
+   * Implement detection of inactive neighbors to handle arbitrary-direction
+   * bouncebacks.
    */
   void streamingUpdate();
 

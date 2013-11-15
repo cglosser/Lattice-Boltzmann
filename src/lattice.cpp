@@ -14,15 +14,18 @@ Lattice::Lattice(const int x_size, const int y_size):
       boost::extents[range(-2, NUM_SITES)][range(1, NUM_WEIGHTS+1)]);
   neighbors.resize(
       boost::extents[range(-2, NUM_SITES)][range(1, NUM_WEIGHTS+1)]);
+  node_state.resize(
+      boost::extents[range(-2, NUM_SITES)]);
 
   for(int site = 0; site < NUM_SITES; site++) {
     for(int n = 1; n <= NUM_WEIGHTS; n++) {
-      f_density[site][n] = 1.0/9;
+      f_density[site][n] = 1;
     }
   }
-  f_density[NUM_SITES/2][6] = 5.0/9;
+  f_density[XDIM + 1][3] = 4;
 
   buildNeighbors();
+  setStates();
 
   return;
 }
@@ -60,6 +63,18 @@ int Lattice::coord2idx(Eigen::Vector2i r) {
   return r[0] + r[1]*XDIM;
 }
 
+void Lattice::setStates() {
+  for(int site = 0; site < NUM_SITES; site++) {
+    node_state[site] = ACTIVE;
+
+    //Pipe conditions
+    if(site < XDIM || site >= NUM_SITES - XDIM) {
+      node_state[site] = INACTIVE;
+    }
+
+  }
+}
+
 void Lattice::buildNeighbors() {
   for(int site = 0; site < NUM_SITES; site++) {
     Eigen::Vector2i r(idx2coord(site));
@@ -84,8 +99,16 @@ void Lattice::buildNeighbors() {
 
 void Lattice::streamingUpdate() {
   for(int site = 0; site < NUM_SITES; site++) {
+    if(node_state[site] == INACTIVE) continue;
+
     for(int n = 1; n <= NUM_WEIGHTS; n++) {
-      push_density[neighbors[site][n]][n] = f_density[site][n];
+      int neighbor_idx = neighbors[site][n];
+
+      if(node_state[neighbor_idx] == INACTIVE) {
+        push_density[site][(NUM_WEIGHTS + 1) - n] = f_density[site][n];
+      } else {
+        push_density[neighbor_idx][n] = f_density[site][n];
+      }
     }
   }
   f_density = push_density;

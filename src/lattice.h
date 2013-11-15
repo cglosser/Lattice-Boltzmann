@@ -92,11 +92,18 @@ class Lattice {
    */
   boost::multi_array<int, 2> neighbors;
 
+  boost::multi_array<state, 1> node_state;
+
   /** @brief Generate an array integers corresponding to neighbor nodes. By
    * default, assumes periodic boundary conditions in x & y -- rigid boundaries
    * must be added by deactivating edge nodes.
    */
   void buildNeighbors();
+
+  /** @brief Set the state of all nodes in the lattice.
+   * @todo Implement IO to read in lattice boundaries from a file.
+   */
+  void setStates();
 
   /** @brief Perform the streaming step of an update wherein lattice values
    * move along their velocity components to adjacent neighbors.

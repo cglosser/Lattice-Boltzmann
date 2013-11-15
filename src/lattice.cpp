@@ -17,10 +17,10 @@ Lattice::Lattice(const int x_size, const int y_size):
 
   for(int site = 0; site < NUM_SITES; site++) {
     for(int n = 1; n <= NUM_WEIGHTS; n++) {
-      f_density[site][n] = 1;
+      f_density[site][n] = 1.0/9;
     }
   }
-  f_density[NUM_SITES/2][6] = 3;
+  f_density[NUM_SITES/2][6] = 5.0/9;
 
   buildNeighbors();
 
@@ -40,13 +40,13 @@ void Lattice::update() {
 }
 
 void Lattice::print(ostream &os) {
-  for(int site = 0; site < NUM_SITES; site++) {
-    os << density(site);
-    if(site % XDIM == 0) {
-      cout << endl;
-    } else {
-      cout << ",";
+  for(int y = YDIM - 1; y >= 0; y--) {
+    for(int x = 0; x < XDIM; x++) {
+      int site = coord2idx(Eigen::Vector2i(x, y));
+      os << density(site);
+      if(x != XDIM - 1) os << ",";
     }
+    os << endl;
   }
   return;
 }
@@ -63,7 +63,6 @@ int Lattice::coord2idx(Eigen::Vector2i r) {
 void Lattice::buildNeighbors() {
   for(int site = 0; site < NUM_SITES; site++) {
     Eigen::Vector2i r(idx2coord(site));
-    cout << site << endl;
 
     for(int n = 1; n <= NUM_WEIGHTS; n++) {
 
@@ -77,10 +76,7 @@ void Lattice::buildNeighbors() {
       rprime[1] = (rprime[1] >= XDIM ? rprime[1] - XDIM : rprime[1]);
 
       neighbors[site][n] = coord2idx(rprime);
-      cout << coord2idx(rprime) << "  ";
-
     }
-    cout << endl << endl;
   }
 
   return;
@@ -120,7 +116,6 @@ void Lattice::collisionUpdate() {
 
   return;
 }
-
 
 Eigen::Vector2i directionToSteps(const int n) {
   if (n < 1 || n > 9 ) {

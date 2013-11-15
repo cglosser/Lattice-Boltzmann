@@ -2,15 +2,13 @@
 using namespace std;
 
 int main() {
-  Lattice myLat(5,5);
+  Lattice myLat(50,50);
 
+  for(int t = 0; t < 5000; t++) {
+    myLat.print(cout);
+    //cout << endl;
 
-  for(int s = 0; s < myLat.NUM_SITES; s++) {
-    cout << s << endl;
-    for(int n = 1; n < myLat.NUM_WEIGHTS; s++) {
-      cout << myLat.neighbors[s][n] << "  ";
-    }
-    cout << endl;
+    myLat.update();
   }
   return 0;
 }

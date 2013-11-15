@@ -28,9 +28,9 @@ typedef boost::multi_array_types::extent_range range;
 class Lattice {
  public:
 
-  /**
-   * @brief Constructs a lattice object given x & y dimensions. Also builds an
-   * appropriate neighbor list with reference entries. */
+  /** @brief Constructs a lattice object given x & y dimensions. Also builds an
+   * appropriate neighbor list with integer entries corresponding to site
+   * indices */
   Lattice(const int, const int);
 
   /** @brief Compute and return the particle density at site i as the sum
@@ -87,14 +87,14 @@ class Lattice {
    * push_density */
   boost::multi_array<int, 2> neighbors;
 
-  /**
-   * @brief Generate an array of references to neighboring sites in a copy of
-   * the canonical lattice.*/
-  void buildNeighbors();
+  /** @brief Generate an array integers corresponding to neighbor nodes. By
+   * default, assumes periodic boundary conditions in x & y -- rigid boundaries
+   * must be added by deactivating edge nodes.
+   */
+   void buildNeighbors();
 
-  /**
-   * @brief Perform the streaming step of an update wherein lattice values move
-   * along their velocity components to adjacent neighbors.
+  /** @brief Perform the streaming step of an update wherein lattice values
+   * move along their velocity components to adjacent neighbors.
    * @details The values must stream simultaneously, in that they move to a
    * secondary lattice prior to getting copied back to the original.
    * @todo Implement detection of NULL neighbor references to handle

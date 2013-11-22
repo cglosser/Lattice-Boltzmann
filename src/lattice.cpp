@@ -72,6 +72,11 @@ void Lattice::setStates() {
       node_state[site] = INACTIVE;
     }
 
+    if(node_state[site] == INACTIVE) {
+      for(int n = 1; n < NUM_WEIGHTS; n++) {
+        f_density[site][n] = 0;
+      }
+    }
   }
 }
 
@@ -120,6 +125,17 @@ void Lattice::streamingUpdate() {
 
   }
   f_density = push_density;
+
+  //Flow conditions
+  for(int site = XDIM; site < NUM_SITES - XDIM; site += XDIM) {
+    f_density[site][1] = f_density[site][2] = f_density[site][4] = 
+    f_density[site][5] = f_density[site][7] = f_density[site][8] = 0;
+    f_density[site][3] = f_density[site][6] = f_density[site][9] = 3;
+  }
+
+  for(int site = 2*XDIM - 1; site < NUM_SITES - XDIM; site += XDIM) {
+    f_density[site][3] = f_density[site][6] = f_density[site][9] = 1;
+  }
   return;
 }
 
@@ -143,16 +159,6 @@ void Lattice::collisionUpdate() {
         
       f_density[site][n] -= 1/tau*(f_density[site][n] - equilibrium);
     }
-  }
-
-  for(int site = 0; site < XDIM; site++) {
-    f_density[site][1] = f_density[site][2] = f_density[site][4] = 
-    f_density[site][5] = f_density[site][7] = f_density[site][8] = 0;
-    f_density[site][3] = f_density[site][6] = f_density[site][9] = 3;
-  }
-
-  for(int site = NUM_SITES - XDIM; site < NUM_SITES; site++) {
-    f_density[site][3] = f_density[site][6] = f_density[site][9] = 0;
   }
 
   return;

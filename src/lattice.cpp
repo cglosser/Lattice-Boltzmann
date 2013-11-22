@@ -22,7 +22,6 @@ Lattice::Lattice(const int x_size, const int y_size):
       f_density[site][n] = 1;
     }
   }
-  f_density[XDIM + 1][3] = 4;
 
   buildNeighbors();
   setStates();
@@ -46,7 +45,7 @@ void Lattice::print(ostream &os) {
   for(int y = YDIM - 1; y >= 0; y--) {
     for(int x = 0; x < XDIM; x++) {
       int site = coord2idx(Eigen::Vector2i(x, y));
-      os << density(site);
+      os << f_density[site][6];
       if(x != XDIM - 1) os << ",";
     }
     os << endl;
@@ -66,9 +65,10 @@ int Lattice::coord2idx(Eigen::Vector2i r) {
 void Lattice::setStates() {
   for(int site = 0; site < NUM_SITES; site++) {
     node_state[site] = ACTIVE;
+    Eigen::Vector2i r(idx2coord(site));
 
     //Pipe conditions
-    if(site < XDIM || site >= NUM_SITES - XDIM) {
+    if(r[1] == 0 || r[1] == YDIM - 1) {
       node_state[site] = INACTIVE;
     }
 
@@ -100,6 +100,12 @@ void Lattice::buildNeighbors() {
 void Lattice::streamingUpdate() {
   for(int site = 0; site < NUM_SITES; site++) {
     if(node_state[site] == INACTIVE) continue;
+    Eigen::Vector2i r(idx2coord(site));
+    if(r[0] == 0) {
+      push_density[site][3] = push_density[site][6] = push_density[site][9] =3;
+      push_density[site][1] = push_density[site][2] = push_density[site][4] = 
+      push_density[site][5] = push_density[site][7] = push_density[site][8] =1;
+    }
 
     for(int n = 1; n <= NUM_WEIGHTS; n++) {
       int neighbor_idx = neighbors[site][n];
@@ -110,6 +116,8 @@ void Lattice::streamingUpdate() {
         push_density[neighbor_idx][n] = f_density[site][n];
       }
     }
+
+
   }
   f_density = push_density;
   return;
@@ -135,6 +143,16 @@ void Lattice::collisionUpdate() {
         
       f_density[site][n] -= 1/tau*(f_density[site][n] - equilibrium);
     }
+  }
+
+  for(int site = 0; site < XDIM; site++) {
+    f_density[site][1] = f_density[site][2] = f_density[site][4] = 
+    f_density[site][5] = f_density[site][7] = f_density[site][8] = 0;
+    f_density[site][3] = f_density[site][6] = f_density[site][9] = 3;
+  }
+
+  for(int site = NUM_SITES - XDIM; site < NUM_SITES; site++) {
+    f_density[site][3] = f_density[site][6] = f_density[site][9] = 0;
   }
 
   return;

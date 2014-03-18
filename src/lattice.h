@@ -21,7 +21,7 @@ typedef boost::multi_array_types::extent_range range;
  * @brief   Standard two-dimensional Boltzmann lattice.
  * @details Maintains a record of the density at each site (for each velocity
  * direction) and each site's neighbors as separate arrays. Also evolves the
- * system in time through an update method. 
+ * system in time through an update method.
  * @todo Implement subclassing to allow D2Q7, D3Q* lattices
  */
 class Lattice {
@@ -36,12 +36,16 @@ class Lattice {
    * of the Boltzmann densities. */
   double density(const int);
 
+  /** @brief Compute and return the local velocity at a site. The velocity is
+   * given by sum(e_i * f_i)/sum(f_i) */
+  Eigen::Vector2d velocity(const int);
+
   /** @brief Perform a stream & collision update to evolve the system by one
    * timestep. */
   void update();
 
-  /** 
-   * @brief   Write the lattice to the specified output stream.  
+  /**
+   * @brief   Write the lattice to the specified output stream.
    * @details Loops over nodes in row-major order, printing node particle
    * densities on the specified stream delimited by commas with newlines at the
    * end of a row. Generally requires reshaping/partitioning to produce a
@@ -69,15 +73,15 @@ class Lattice {
             NUM_SITES,   ///< Total number of sites
             NUM_WEIGHTS; ///< Number of discretized momentum directions
 
-  /** @brief Directioinal weights for the equilibrium value of the D2Q9 lattice 
+  /** @brief Directioinal weights for the equilibrium value of the D2Q9 lattice
    */
-  const std::vector<double> weight; 
+  const std::vector<double> weight;
 
   /** @brief Array containing the Boltzmann densities for every node in the
    * lattice. */
   array2D f_density;
 
-  /** 
+  /**
    * @brief   Array used to hold temporary Boltzmann density values during the
    * streaming update.
    * @details This array exists only to allow the simultaneous update during
@@ -130,7 +134,7 @@ class Lattice {
  * the lattice. For the D2Q9 lattice, the directions are as follows: \n
  * <pre>
  * 1   2   3
- *   \ | /  
+ *   \ | /
  * 4 - 5 - 6
  *   / | \
  * 7   8   9

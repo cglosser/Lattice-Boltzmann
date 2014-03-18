@@ -17,4 +17,4 @@ $(PROGRAM): $(OBJECTS)
 
 .PHONY: clean
 clean:
-	rm -rf *.exe *.o *.out 
+	rm -rf *.exe *.o *.out

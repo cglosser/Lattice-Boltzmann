@@ -2,13 +2,13 @@
 using namespace std;
 
 int main() {
-  int dim = 100;
+  int dim = 30;
   Lattice myLat(3*dim,dim);
 
   myLat.print(cout);
-  for(int time = 0; time < 5000; time++) {
+  for(int time = 0; time < 3000; time++) {
     myLat.update();
-    if(time % 100 == 0) myLat.print(cout);
+    myLat.print(cout);
   }
 
   return 0;

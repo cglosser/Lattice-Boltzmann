@@ -1,7 +1,7 @@
 #include "lattice.h"
 using namespace std;
 
-#define tau 1
+#define tau 1.0 //keep this a real -- integer division!
 
 double d2q9_weights[] = {1.0/36, 1.0/9, 1.0/36, 1.0/9, 4.0/9, 1.0/9, 1.0/36, 1.0/9, 1.0/36};
 
@@ -79,6 +79,10 @@ void Lattice::setStates() {
 
     //Pipe conditions
     if(r[1] == 0 || r[1] == YDIM - 1) {
+      node_state[site] = INACTIVE;
+    }
+
+    if((r - Eigen::Vector2i(50,15)).norm() < 6) {
       node_state[site] = INACTIVE;
     }
 

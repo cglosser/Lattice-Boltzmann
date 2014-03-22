@@ -82,7 +82,7 @@ void Lattice::setStates() {
       node_state[site] = INACTIVE;
     }
 
-    if((r - Eigen::Vector2i(50,15)).norm() < 6) {
+    if((r - Eigen::Vector2i(80,0)).norm() <= 15) {
       node_state[site] = INACTIVE;
     }
 
@@ -106,8 +106,8 @@ void Lattice::buildNeighbors() {
       rprime[0] = (rprime[0] <  0    ? rprime[0] + XDIM : rprime[0]);
       rprime[0] = (rprime[0] >= XDIM ? rprime[0] - XDIM : rprime[0]);
 
-      rprime[1] = (rprime[1] <  0    ? rprime[1] + XDIM : rprime[1]);
-      rprime[1] = (rprime[1] >= XDIM ? rprime[1] - XDIM : rprime[1]);
+      rprime[1] = (rprime[1] <  0    ? rprime[1] + YDIM : rprime[1]);
+      rprime[1] = (rprime[1] >= XDIM ? rprime[1] - YDIM : rprime[1]);
 
       neighbors[site][n] = coord2idx(rprime);
     }
@@ -173,7 +173,7 @@ void Lattice::collisionUpdate() {
         - (3.0/2)*macro_vel.squaredNorm())*weight[n - 1]*density; // c = 1
                //weight is a std::vector here^, hence n - 1
 
-      f_density[site][n] -= 1/tau*(f_density[site][n] - equilibrium);
+      f_density[site][n] -= 1.0/tau*(f_density[site][n] - equilibrium);
     }
   }
 
@@ -186,7 +186,7 @@ Eigen::Vector2i directionToSteps(const int n) {
   }
   int count = 0;
   Eigen::Vector2i result;
-  for(int dy = 1; dy >= -1; dy--) {
+  for(int dy = -1; dy <= 1; dy++) { // y axis is "inverted"
     for(int dx = -1; dx <= 1; dx++) {
       if (++count == n)
         result = Eigen::Vector2i(dx, dy);

@@ -79,6 +79,7 @@ void Lattice::buildNeighbors() {
   for(int site = 0; site < NUM_SITES; site++) {
     Eigen::Vector2i r(idx2coord(site));
 
+    cout << "site = " << site << endl;
     for(int n = 1; n <= NUM_WEIGHTS; n++) {
 
       Eigen::Vector2i r = idx2coord(site), dr = directionToSteps(n),
@@ -91,7 +92,9 @@ void Lattice::buildNeighbors() {
       rprime[1] = (rprime[1] >= XDIM ? rprime[1] - XDIM : rprime[1]);
 
       neighbors[site][n] = coord2idx(rprime);
+      cout << "\tdir = " << n << ": " << neighbors[site][n] << endl;
     }
+    cout << endl;
   }
 
   return;
@@ -146,7 +149,7 @@ Eigen::Vector2i directionToSteps(const int n) {
   }
   int count = 0;
   Eigen::Vector2i result;
-  for(int dy = 1; dy >= -1; dy--) {
+  for(int dy = -1; dy <= 1; dy++) {
     for(int dx = -1; dx <= 1; dx++) {
       if (++count == n)
         result = Eigen::Vector2i(dx, dy);

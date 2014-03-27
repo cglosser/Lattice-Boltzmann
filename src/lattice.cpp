@@ -50,8 +50,8 @@ void Lattice::print(ostream &os) {
   for(int y = YDIM - 1; y >= 0; y--) {
     for(int x = 0; x < XDIM; x++) {
       int site = coord2idx(Eigen::Vector2i(x, y));
-      //os << density(site);
-      os << velocity(site).norm();
+      os << density(site);
+      //os << velocity(site).norm();
       if(x != XDIM - 1) os << ",";
     }
     os << endl;
@@ -71,17 +71,23 @@ int Lattice::coord2idx(Eigen::Vector2i r) {
 void Lattice::setStates() {
   for(int site = 0; site < NUM_SITES; site++) {
     Eigen::Vector2i r(idx2coord(site));
+
     if(r[1] == 0 || r[1] == YDIM - 1) {
       node_state[site] = INACTIVE;
-      for(int n = 1; n <= NUM_WEIGHTS; n++)
-      f_density[site][n] = 0;
     } else {
       node_state[site] = ACTIVE;
       for(int n = 1; n <= NUM_WEIGHTS; n++)
       f_density[site][n] = weight[n - 1];
     }
+
+    if((r - Eigen::Vector2i(100,0)).norm() <= 6) node_state[site] = INACTIVE;
+
   }
 
+  for(int site = 0; site < NUM_SITES; ++site) {
+    if (node_state[site] == INACTIVE) 
+      for(int n = 1; n <= NUM_WEIGHTS; ++n) f_density[site][n] = 0;
+  }
 }
 
 void Lattice::buildNeighbors() {

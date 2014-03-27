@@ -17,11 +17,6 @@ Lattice::Lattice(const int x_size, const int y_size):
   node_state.resize(
       boost::extents[range(-2, NUM_SITES)]);
 
-  for(int site = 0; site < NUM_SITES; site++) {
-    for(int n = 1; n <= NUM_WEIGHTS; n++) {
-      f_density[site][n] = 1;
-    }
-  }
 
   buildNeighbors();
   setStates();
@@ -55,7 +50,7 @@ void Lattice::print(ostream &os) {
   for(int y = YDIM - 1; y >= 0; y--) {
     for(int x = 0; x < XDIM; x++) {
       int site = coord2idx(Eigen::Vector2i(x, y));
-      os << f_density[site][6];
+      os << density(site);
       if(x != XDIM - 1) os << ",";
     }
     os << endl;
@@ -75,23 +70,12 @@ int Lattice::coord2idx(Eigen::Vector2i r) {
 void Lattice::setStates() {
   for(int site = 0; site < NUM_SITES; site++) {
     node_state[site] = ACTIVE;
-    Eigen::Vector2i r(idx2coord(site));
-
-    //Pipe conditions
-    if(r[1] == 0 || r[1] == YDIM - 1) {
-      node_state[site] = INACTIVE;
-    }
-
-    if((r - Eigen::Vector2i(80,0)).norm() <= 15) {
-      node_state[site] = INACTIVE;
-    }
-
-    if(node_state[site] == INACTIVE) {
-      for(int n = 1; n < NUM_WEIGHTS; n++) {
-        f_density[site][n] = 0;
-      }
-    }
+    for(int n = 1; n <= NUM_WEIGHTS; n++)
+      f_density[site][n] = weight[n - 1];
   }
+
+  f_density[XDIM + 1][3] = 1.1*f_density[XDIM+1][3];
+
 }
 
 void Lattice::buildNeighbors() {
@@ -119,12 +103,6 @@ void Lattice::buildNeighbors() {
 void Lattice::streamingUpdate() {
   for(int site = 0; site < NUM_SITES; site++) {
     if(node_state[site] == INACTIVE) continue;
-    Eigen::Vector2i r(idx2coord(site));
-    if(r[0] == 0) {
-      push_density[site][3] = push_density[site][6] = push_density[site][9] =3;
-      push_density[site][1] = push_density[site][2] = push_density[site][4] =
-      push_density[site][5] = push_density[site][7] = push_density[site][8] =1;
-    }
 
     for(int n = 1; n <= NUM_WEIGHTS; n++) {
       int neighbor_idx = neighbors[site][n];
@@ -135,23 +113,8 @@ void Lattice::streamingUpdate() {
         push_density[neighbor_idx][n] = f_density[site][n];
       }
     }
-
-
   }
   f_density = push_density;
-
-  //Flow conditions
-  for(int site = XDIM; site < NUM_SITES - XDIM; site += XDIM) {
-    f_density[site][1] = f_density[site][2] = f_density[site][4] =
-    f_density[site][5] = f_density[site][7] = f_density[site][8] = 0;
-    f_density[site][3] = f_density[site][6] = f_density[site][9] = 3;
-  }
-
-  for(int site = 2*XDIM - 1; site < NUM_SITES - XDIM; site += XDIM) {
-    for(int n = 1; n < NUM_WEIGHTS; n++) {
-      f_density[site][n] = 1;
-    }
-  }
   return;
 }
 
@@ -169,10 +132,10 @@ void Lattice::collisionUpdate() {
 
     for(int n = 1; n <= NUM_WEIGHTS; n++) {
       double e_dot_u = directionToSteps(n).cast<double>().dot(macro_vel);
-      double equilibrium = (1 + 3*e_dot_u + (9.0/2)*pow(e_dot_u,2)
+      double equilibrium = (1 + 3.0*e_dot_u + (9.0/2)*pow(e_dot_u,2)
         - (3.0/2)*macro_vel.squaredNorm())*weight[n - 1]*density; // c = 1
                //weight is a std::vector here^, hence n - 1
-
+        
       f_density[site][n] -= 1.0/tau*(f_density[site][n] - equilibrium);
     }
   }
@@ -186,7 +149,7 @@ Eigen::Vector2i directionToSteps(const int n) {
   }
   int count = 0;
   Eigen::Vector2i result;
-  for(int dy = -1; dy <= 1; dy++) { // y axis is "inverted"
+  for(int dy = -1; dy <= 1; dy++) {
     for(int dx = -1; dx <= 1; dx++) {
       if (++count == n)
         result = Eigen::Vector2i(dx, dy);

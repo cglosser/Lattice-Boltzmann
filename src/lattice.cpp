@@ -17,12 +17,6 @@ Lattice::Lattice(const int x_size, const int y_size):
   node_state.resize(
       boost::extents[range(-2, NUM_SITES)]);
 
-  for(int site = 0; site < NUM_SITES; site++) {
-    for(int n = 1; n <= NUM_WEIGHTS; n++) {
-      f_density[site][n] = 1;
-    }
-  }
-  f_density[XDIM + 1][3] = 4;
 
   buildNeighbors();
   setStates();
@@ -66,20 +60,18 @@ int Lattice::coord2idx(Eigen::Vector2i r) {
 void Lattice::setStates() {
   for(int site = 0; site < NUM_SITES; site++) {
     node_state[site] = ACTIVE;
-
-    //Pipe conditions
-    if(site < XDIM || site >= NUM_SITES - XDIM) {
-      node_state[site] = INACTIVE;
-    }
-
+    for(int n = 1; n <= NUM_WEIGHTS; n++)
+      f_density[site][n] = weight[n - 1];
   }
+
+  f_density[XDIM + 1][3] = 1.1*f_density[XDIM+1][3];
+
 }
 
 void Lattice::buildNeighbors() {
   for(int site = 0; site < NUM_SITES; site++) {
     Eigen::Vector2i r(idx2coord(site));
 
-    cout << "site = " << site << endl;
     for(int n = 1; n <= NUM_WEIGHTS; n++) {
 
       Eigen::Vector2i r = idx2coord(site), dr = directionToSteps(n),
@@ -92,9 +84,7 @@ void Lattice::buildNeighbors() {
       rprime[1] = (rprime[1] >= XDIM ? rprime[1] - XDIM : rprime[1]);
 
       neighbors[site][n] = coord2idx(rprime);
-      cout << "\tdir = " << n << ": " << neighbors[site][n] << endl;
     }
-    cout << endl;
   }
 
   return;
@@ -132,11 +122,11 @@ void Lattice::collisionUpdate() {
 
     for(int n = 1; n <= NUM_WEIGHTS; n++) {
       double e_dot_u = directionToSteps(n).cast<double>().dot(macro_vel);
-      double equilibrium = (1 + 3*e_dot_u + (9.0/2)*pow(e_dot_u,2)
+      double equilibrium = (1 + 3.0*e_dot_u + (9.0/2)*pow(e_dot_u,2)
         - (3.0/2)*macro_vel.squaredNorm())*weight[n - 1]*density; // c = 1
                //weight is a std::vector here^, hence n - 1
         
-      f_density[site][n] -= 1/tau*(f_density[site][n] - equilibrium);
+      f_density[site][n] -= 1.0/tau*(f_density[site][n] - equilibrium);
     }
   }
 

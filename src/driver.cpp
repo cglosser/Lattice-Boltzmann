@@ -2,7 +2,7 @@
 using namespace std;
 
 int main() {
-  Lattice myLat(250,50);
+  Lattice myLat(50,50);
 
   for(int time = 0; time < 500; time++) {
     myLat.update();

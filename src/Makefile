@@ -3,7 +3,7 @@ CFLAGS = -Wall -O3 -std=c++11 -g
 CFLAGS += $(shell pkg-config --cflags eigen3)
 LIBS += $(shell pkg-config --libs eigen3)
 LDFLAGS =
-OBJECTS = lattice.o driver.o
+OBJECTS = lattice.o node.o driver.o
 PROGRAM = lbm.out
 
 COMPILE = $(CC) $(CFLAGS) $(LDFLAGS)

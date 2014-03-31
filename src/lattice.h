@@ -2,20 +2,12 @@
 #define LATTICE_H
 
 #include "boost/multi_array.hpp"
+#include "node.h"
 #include <cmath>
-#include <Eigen/Dense>
 #include <iostream>
+#include <iterator>
 
-/**
- * @brief Define a 2d + velocities array for D2Q9 lattice geometries.
- */
-typedef boost::multi_array<double, 2> array2D;
-
-/** @brief Simplify a boost::multi_array range object. The directional
- * components of the lattice are most easily indexed through [1:NUM_WEIGHTS +
- * 1), so it is convenient for the multi_array to assume the same range.
- */
-typedef boost::multi_array_types::extent_range range;
+typedef std::vector<d2q9Node> nodeArray;
 
 /**
  * @brief   Standard two-dimensional Boltzmann lattice.
@@ -32,13 +24,14 @@ class Lattice {
    * indices */
   Lattice(const int, const int);
 
-  /** @brief Compute and return the particle density at site i as the sum
-   * of the Boltzmann densities. */
-  double density(const int);
-
   /** @brief Perform a stream & collision update to evolve the system by one
    * timestep. */
   void update();
+
+  double density(const unsigned, const unsigned);
+  Eigen::Vector2d velocity(const unsigned, const unsigned);
+
+  void buildNeighbors();
 
   /** 
    * @brief   Write the lattice to the specified output stream.  
@@ -62,48 +55,20 @@ class Lattice {
 
  private:
 
-  enum state {INACTIVE, ACTIVE};
+  const int XDIM_,        ///< Length of lattice in the x dimension
+            YDIM_,        ///< Length of lattice in the y dimension
+            NUM_SITES_,   ///< Total number of sites
+            NUM_WEIGHTS_; ///< Number of discretized momentum directions
 
-  const int XDIM,        ///< Length of lattice in the x dimension
-            YDIM,        ///< Length of lattice in the y dimension
-            NUM_SITES,   ///< Total number of sites
-            NUM_WEIGHTS; ///< Number of discretized momentum directions
+  nodeArray sites_;
+  std::vector<std::vector<int>> neighborhood_;
 
-  /** @brief Directioinal weights for the equilibrium value of the D2Q9 lattice 
-   */
-  const std::vector<double> weight; 
-
-  /** @brief Array containing the Boltzmann densities for every node in the
-   * lattice. */
-  array2D f_density;
-
-  /** 
-   * @brief   Array used to hold temporary Boltzmann density values during the
-   * streaming update.
-   * @details This array exists only to allow the simultaneous update during
-   * streaming. It goes in scope at the instantiation of the class so that the
-   * neighbor list can contain valid references to equivalent lattice
-   * locations.
-   */
-  array2D  push_density;
-
-  /** @brief Array of indices to neighboring sites. The second dimension runs
-   * from [1, NUM_WEIGHTS].
-   */
-  boost::multi_array<int, 2> neighbors;
-
-  boost::multi_array<state, 1> node_state;
-
-  /** @brief Generate an array integers corresponding to neighbor nodes. By
-   * default, assumes periodic boundary conditions in x & y -- rigid boundaries
-   * must be added by deactivating edge nodes.
-   */
-  void buildNeighbors();
+  void buildNeighbors_();
 
   /** @brief Set the state of all nodes in the lattice.
-   * @todo Implement IO to read in lattice boundaries from a file.
+   *  @todo Implement IO to read in lattice boundaries from a file.
    */
-  void setStates();
+  void setStates_();
 
   /** @brief Perform the streaming step of an update wherein lattice values
    * move along their velocity components to adjacent neighbors.
@@ -112,7 +77,7 @@ class Lattice {
    * Implement detection of inactive neighbors to handle arbitrary-direction
    * bouncebacks.
    */
-  void streamingUpdate();
+  void streamingUpdate_();
 
   /**
    * @brief   Perform the collision step of an update
@@ -120,7 +85,7 @@ class Lattice {
    * lattice, tending to push the system towards an equilibrium value. The form
    * of the equilibrium value is highly dependent on the lattice geometry.
    */
-  void collisionUpdate();
+  void collisionUpdate_();
 
 };
 
@@ -129,14 +94,14 @@ class Lattice {
  * @details Converts an integer in the range [1, NUM_WEIGHTS] to unit steps on
  * the lattice. For the D2Q9 lattice, the directions are as follows: \n
  * <pre>
- * 1   2   3
+ * 6   7   8
  *   \ | /  
- * 4 - 5 - 6
+ * 3 - 4 - 5
  *   / | \
- * 7   8   9
+ * 0   1   2
  * </pre>
  * so that the reverse of any given direction becomes simply
- * (NUM_WEIGHTS + 1) - n
+ * NUM_WEIGHTS - n
  * @throws  domain_error if the input does not correspond to one of the nearest
  * neighbor directions
  * @returns A two dimensional integer containing steps along x and y. This

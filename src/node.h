@@ -20,7 +20,8 @@ struct d2q9Node {
   Eigen::Vector2d velocity();
 
   d2q9Node() {
-    f_density.resize(9);
+    f_density.resize(9, 0);
+    temp_density.resize(9, 0);
   }
 };
 

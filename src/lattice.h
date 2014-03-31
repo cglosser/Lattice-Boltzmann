@@ -94,18 +94,23 @@ class Lattice {
  * @details Converts an integer in the range [1, NUM_WEIGHTS] to unit steps on
  * the lattice. For the D2Q9 lattice, the directions are as follows: \n
  * <pre>
+ *
+ * yhat
+ *  ^
+ *  |
+ *  |
+ *  |
+ *
  * 6   7   8
  *   \ | /  
  * 3 - 4 - 5
  *   / | \
- * 0   1   2
+ * 0   1   2  xhat--->
  * </pre>
  * so that the reverse of any given direction becomes simply
  * NUM_WEIGHTS - n
- * @throws  domain_error if the input does not correspond to one of the nearest
- * neighbor directions
- * @returns A two dimensional integer containing steps along x and y. This
- * vector must be cast to a double for general purpose computations!
+ * @returns A two dimensional integer vector containing steps along x and y.
+ * This vector must be cast to a double for general purpose computations!
  *
  * @todo Buld into Lattice class/subclasses (steps on the lattice are part of
  * the lattice geometry and thus this function should be a class member.)

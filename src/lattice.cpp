@@ -46,7 +46,6 @@ void Lattice::buildNeighbors_() {
     }
     neighborhood_.push_back(nbd);
   }
-
 }
 
 void Lattice::print(ostream &os) {
@@ -72,35 +71,43 @@ int Lattice::coord2idx(Eigen::Vector2i r) {
 void Lattice::setStates_() {
   for(auto &it : sites_) {
     it.state = NodeState::ACTIVE;
-    it.f_density = d2q9Node::d2q9_weights;
+    std::copy(d2q9Node::d2q9_weights.begin(), d2q9Node::d2q9_weights.end(),
+        it.f_density.begin());
   }
+  sites_[2].f_density[7] *= 1.1;
 }
 
 void Lattice::streamingUpdate_() {
+  for(int idx = 0; idx < NUM_SITES_; ++idx) {
+    d2q9Node &site = sites_[idx];
+    for(int dir = 0; dir < NUM_WEIGHTS_; ++dir) {
+      d2q9Node &neighbor = sites_[neighborhood_[idx][dir]];
+      if(neighbor.state == NodeState::ACTIVE)
+        neighbor.temp_density[dir] = site.f_density[dir];
+      else if(neighbor.state == NodeState::INACTIVE)
+        site.temp_density[(NUM_WEIGHTS_ - 1) - dir] = site.f_density[dir];
+    }
+  }
+
+  //Finish off simultaneous update
+  for(auto &site : sites_) site.f_density.swap(site.temp_density);
+
   return;
 }
 
 void Lattice::collisionUpdate_() {
-  //for(int site = 0; site < NUM_SITES; site++) {
-    //Eigen::Vector2d macro_vel(0,0);
-    //double density = 0;
+  for(auto &site : sites_) {
+    Eigen::Vector2d macro_vel(site.velocity());
+    double density = site.density();
+    for(int dir = 0; dir < NUM_WEIGHTS_; ++dir) {
+      double e_dot_u =
+        d2q9Node::d2q9_directions[dir].cast<double>().dot(macro_vel);
+      double equilib = (1 + 3.0*e_dot_u + (9.0/2)*pow(e_dot_u,2) -
+          (3.0/2)*macro_vel.squaredNorm())*d2q9Node::d2q9_weights[dir]*density;
 
-    //for(int n = 1; n <= NUM_WEIGHTS; n++) {
-      //macro_vel += f_density[site][n]*(directionToSteps(n).cast<double>());
-      //density += f_density[site][n];
-    //}
-
-    //if(density != 0) macro_vel /= density;
-
-    //for(int n = 1; n <= NUM_WEIGHTS; n++) {
-      //double e_dot_u = directionToSteps(n).cast<double>().dot(macro_vel);
-      //double equilibrium = (1 + 3.0*e_dot_u + (9.0/2)*pow(e_dot_u,2)
-        //- (3.0/2)*macro_vel.squaredNorm())*weight[n - 1]*density; // c = 1
-               ////weight is a std::vector here^, hence n - 1
-        
-      //f_density[site][n] -= 1.0/tau*(f_density[site][n] - equilibrium);
-    //}
-  //}
+      site.f_density[dir] -= 1.0/tau*(site.f_density[dir] - equilib);
+    }
+  }
 
   return;
 }

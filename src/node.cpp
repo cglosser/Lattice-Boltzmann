@@ -11,7 +11,7 @@ const std::vector<Eigen::Vector2i> d2q9Node::d2q9_directions = {
 };
 
 double d2q9Node::density() {
-  double rho = std::accumulate(f_density.begin(), f_density.end(), 0);
+  double rho = std::accumulate(f_density.begin(), f_density.end(), 0.0);
   return rho;
 };
 

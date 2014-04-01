@@ -16,6 +16,7 @@ struct d2q9Node {
   std::vector<double> f_density, temp_density;
   NodeState state;
 
+  Eigen::Vector2d rhoVelocity();
   double density();
   Eigen::Vector2d velocity();
 

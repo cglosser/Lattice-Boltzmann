@@ -16,9 +16,10 @@ struct d2q9Node {
   std::vector<double> f_density, temp_density;
   NodeState state;
 
-  Eigen::Vector2d rhoVelocity();
+  Eigen::Vector2d massCurrent();
   double density();
   Eigen::Vector2d velocity();
+  static int reverse(int);
 
   d2q9Node() {
     f_density.resize(9, 0);

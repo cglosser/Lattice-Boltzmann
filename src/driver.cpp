@@ -2,7 +2,7 @@
 using namespace std;
 
 int main() {
-  Lattice myLat(60,11);
+  Lattice myLat(250,50);
   myLat.print(cout);
 
   for(int time = 0; time < 500; time++) {

@@ -15,8 +15,7 @@ int main() {
   cout << myNode.velocity().transpose() << endl;
 
   for(int i = 0; i < 9; ++i) {
-    cout << myNode.f_density[i] << " | " <<
-      myNode.d2q9_directions[i].transpose() << endl;
+    cout << i << " " << d2q9Node::reverse(i) << endl;
   }
 
   return 0;

@@ -1,7 +1,6 @@
 #ifndef LATTICE_H
 #define LATTICE_H
 
-#include "boost/multi_array.hpp"
 #include "node.h"
 #include <cmath>
 #include <iostream>
@@ -22,7 +21,7 @@ class Lattice {
   /** @brief Constructs a lattice object given x & y dimensions. Also builds an
    * appropriate neighbor list with integer entries corresponding to site
    * indices */
-  Lattice(const int, const int);
+  Lattice(int, int, double, double);
 
   /** @brief Perform a stream & collision update to evolve the system by one
    * timestep. */
@@ -31,7 +30,8 @@ class Lattice {
   double density(const unsigned, const unsigned);
   Eigen::Vector2d velocity(const unsigned, const unsigned);
 
-  void buildNeighbors();
+  static double poiseuilleX(int);
+  static double poiseuilleY(int);
 
   /** 
    * @brief   Write the lattice to the specified output stream.  
@@ -53,12 +53,15 @@ class Lattice {
    */
   int coord2idx(const Eigen::Vector2i);
 
+
  private:
 
   const int XDIM_,        ///< Length of lattice in the x dimension
             YDIM_,        ///< Length of lattice in the y dimension
             NUM_SITES_,   ///< Total number of sites
             NUM_WEIGHTS_; ///< Number of discretized momentum directions
+  const double maxVelocity_, Reynolds_;
+  double nu_, omega_;
 
   nodeArray sites_;
   std::vector<std::vector<int>> neighborhood_;
@@ -101,14 +104,12 @@ class Lattice {
  *  |
  *  |
  *
- * 6   7   8
+ * 6   2   5
  *   \ | /  
- * 3 - 4 - 5
+ * 3 - 0 - 1
  *   / | \
- * 0   1   2  xhat--->
+ * 7   4   8  xhat--->
  * </pre>
- * so that the reverse of any given direction becomes simply
- * NUM_WEIGHTS - n
  * @returns A two dimensional integer vector containing steps along x and y.
  * This vector must be cast to a double for general purpose computations!
  *

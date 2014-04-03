@@ -7,7 +7,7 @@
 #include <numeric>
 #include <vector>
 
-enum class NodeState {INACTIVE, ACTIVE};
+enum class NodeState {ACTIVE, WALL, INLET, OUTLET};
 
 struct d2q9Node {
   static const std::vector<double>          d2q9_weights;

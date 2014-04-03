@@ -16,7 +16,6 @@ Lattice::Lattice(int x_size, int y_size, double mV, double Re): XDIM_(x_size),
 }
 
 double Lattice::density(const unsigned x, const unsigned y) {
-  
   return sites_[coord2idx(Eigen::Vector2i(x, y))].density();
 }
 
@@ -26,15 +25,16 @@ Eigen::Vector2d Lattice::velocity(const unsigned x, const unsigned y) {
 
 double Lattice::poiseuilleX(int x) {
   double radius = 0.5*(XDIM_ - 1);
-  return -maxVelocity_*(pow(std::abs(1 - (x-1)/radius), 2) - 1);
+  return -maxVelocity_*(pow(std::abs(1 - x/radius), 2) - 1);
 }
 
 double Lattice::poiseuilleY(int y) {
   double radius = 0.5*(YDIM_ - 1);
-  return -maxVelocity_*(pow(std::abs(1 - (y-1)/radius), 2) - 1);
+  return -maxVelocity_*(pow(std::abs(1 - y/radius), 2) - 1);
 }
 
 void Lattice::update() {
+  inletOutlet_();
   streamingUpdate_();
   collisionUpdate_();
   return;
@@ -69,11 +69,15 @@ void Lattice::setStates_() {
 
   for(int idx = 0; idx < NUM_SITES_; ++idx) {
     Eigen::Vector2i r(idx2coord(idx));
+    if(r[0] == 0)        sites_[idx].state = NodeState::INLET;
+    if(r[0] == XDIM_ - 1) sites_[idx].state = NodeState::OUTLET;
     if(r[1] == 0 || r[1] == YDIM_ - 1)
+      sites_[idx].state = NodeState::WALL;
+    if((r - Eigen::Vector2i(XDIM_/4, YDIM_/2)).norm() < YDIM_/10+1)
       sites_[idx].state = NodeState::WALL;
   }
 
-  sites_[NUM_SITES_/2].f_density[5] *= 2;
+  //sites_[NUM_SITES_/2].f_density[5] *= 2;
 
   for(auto &site : sites_) {
     if(site.state == NodeState::WALL)
@@ -109,12 +113,11 @@ void Lattice::streamingUpdate_() {
   {
     d2q9Node &site = sites_[idx];
     if(site.state == NodeState::WALL) continue;
-    Eigen::Vector2i r = idx2coord(idx);
     for(int dir = 0; dir < NUM_WEIGHTS_; ++dir) {
       d2q9Node &neighbor = sites_[neighborhood_[idx][dir]];
-      if(neighbor.state == NodeState::ACTIVE)
+      if(neighbor.state != NodeState::WALL)
         neighbor.temp_density[dir] = site.f_density[dir];
-      else if(neighbor.state == NodeState::WALL)
+      else 
         site.temp_density[site.reverse(dir)] = site.f_density[dir];
     }
   }
@@ -148,6 +151,52 @@ void Lattice::collisionUpdate_() {
   }
 
   return;
+}
+
+void Lattice::inletOutlet_() {
+  for(int idx = 0; idx < NUM_SITES_; ++idx) {
+    if      (sites_[idx].state == NodeState::INLET)   inletZou_(idx);
+    else if (sites_[idx].state == NodeState::OUTLET) outletZou_(idx);
+  }
+}
+
+void Lattice::inletZou_(int idx)
+{
+  d2q9Node &site = sites_[idx];
+  std::vector<double> &fi = site.f_density;
+  Eigen::Vector2i r(idx2coord(idx));
+  Eigen::Vector2d u0(poiseuilleY(r[1]), 0);
+  //Assume a western wall
+  double fint  = fi[0] + fi[2] + fi[4],
+         fint2 = fi[3] + fi[6] + fi[7],
+         rho   = (fint + 2*fint2)/(1 - u0[0]);
+  
+  double fdiff = 0.5*(fi[2] - fi[4]),
+         rhoUx = rho*u0[0]/6.0,
+         rhoUy = 0.5*rho*u0[1];
+
+  fi[1] = fi[3] + 4*rhoUx;
+  fi[5] = fi[7] - fdiff + rhoUx + rhoUy;
+  fi[8] = fi[6] + fdiff + rhoUx - rhoUy;
+}
+
+void Lattice::outletZou_(int idx)
+{
+  d2q9Node &site = sites_[idx];
+  std::vector<double> &fi = site.f_density;
+  Eigen::Vector2i r(idx2coord(idx));
+  Eigen::Vector2d u0(poiseuilleY(r[1]), 0);
+  //Assume an eastern wall
+  double fint  = fi[0] + fi[2] + fi[4],
+         fint2 = fi[1] + fi[8] + fi[5],
+         rho   = (fint + 2*fint2)/(1 - u0[0]);
+  
+  double fdiff = 0.5*(fi[2] - fi[4]),
+         rhoUx = rho * u0[0]/6,
+         rhoUy = 0.5*rho*u0[1];
+  fi[3] = fi[1] - 4*rhoUx;
+  fi[7] = fi[5] + fdiff - rhoUx - rhoUy;
+  fi[6] = fi[8] - fdiff - rhoUx + rhoUy;
 }
 
 Eigen::Vector2i directionToSteps(const int n) {

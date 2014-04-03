@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -std=c++11 -g
+CFLAGS = -Wall -std=c++11 -g -O3
 CFLAGS += $(shell pkg-config --cflags eigen3)
 LIBS += $(shell pkg-config --libs eigen3)
 LDFLAGS =

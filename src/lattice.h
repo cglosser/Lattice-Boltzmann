@@ -30,8 +30,8 @@ class Lattice {
   double density(const unsigned, const unsigned);
   Eigen::Vector2d velocity(const unsigned, const unsigned);
 
-  static double poiseuilleX(int);
-  static double poiseuilleY(int);
+  double poiseuilleX(int);
+  double poiseuilleY(int);
 
   /** 
    * @brief   Write the lattice to the specified output stream.  
@@ -89,7 +89,10 @@ class Lattice {
    * of the equilibrium value is highly dependent on the lattice geometry.
    */
   void collisionUpdate_();
-
+  
+  void inletOutlet_();
+  void inletZou_(int);
+  void outletZou_(int);
 };
 
 /**

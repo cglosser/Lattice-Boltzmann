@@ -9,6 +9,7 @@ int main() {
     myLat.update();
     myLat.print(cout);
   }
+  
 
   return 0;
 }

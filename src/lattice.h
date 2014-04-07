@@ -60,7 +60,7 @@ class Lattice {
             YDIM_,        ///< Length of lattice in the y dimension
             NUM_SITES_,   ///< Total number of sites
             NUM_WEIGHTS_; ///< Number of discretized momentum directions
-  const double maxVelocity_, Reynolds_;
+  const double maxVelocity_, Re_;
   double nu_, omega_;
 
   nodeArray sites_;

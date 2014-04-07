@@ -20,6 +20,7 @@ struct d2q9Node {
   double density();
   Eigen::Vector2d velocity();
   static int reverse(int);
+  std::vector<double> equilibrium(double, Eigen::Vector2d);
 
   d2q9Node() {
     f_density.resize(9, 0);

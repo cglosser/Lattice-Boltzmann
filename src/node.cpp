@@ -27,6 +27,17 @@ Eigen::Vector2d d2q9Node::velocity() {
   return massCurrent()/density();
 }
 
+std::vector<double> d2q9Node::equilibrium(double rho, Eigen::Vector2d vel) {
+  std::vector<double> result(9, 0);
+
+  for(int dir = 0; dir < 9; ++dir) {
+    double e_dot_u = vel.dot(d2q9_directions[dir].cast<double>());
+    result[dir] = rho*d2q9_weights[dir]*(1 + 3*e_dot_u + 4.5*e_dot_u*e_dot_u - 1.5*vel.squaredNorm());
+  }
+
+  return result;
+}
+
 int d2q9Node::reverse(int dir) {
   if(dir == 0)
     return dir;

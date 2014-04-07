@@ -66,6 +66,11 @@ void Lattice::setStates_() {
     Eigen::Vector2i r(idx2coord(idx));
     Eigen::Vector2d u0(poiseuilleY(r[1]), 0);
 
+    if(r[0] == 0)
+      site.state = NodeState::INLET;
+    else if(r[0] == XDIM_ - 1)
+      site.state = NodeState::OUTLET;
+
     if(r[1] == 0 || r[1] == YDIM_ - 1) {
       site.state = NodeState::WALL;
       std::fill(site.f_density.begin(), site.f_density.end(), 0);
@@ -126,20 +131,12 @@ void Lattice::collisionUpdate_() {
     d2q9Node &site = sites_[idx];
     if(site.state == NodeState::WALL) continue;
     //Eigen::Vector2i r = idx2coord(idx);
-    double density = site.density();
-    Eigen::Vector2d velocity = site.velocity();
-      for(int dir = 0; dir < NUM_WEIGHTS_; ++dir)
-      {
-        double e_dot_u = site.d2q9_directions[dir].cast<double>().dot(velocity);
-        double equilib = (density + 3.0*e_dot_u + (9.0/2)*pow(e_dot_u,2) -
-            (3.0/2)*velocity.squaredNorm())*d2q9Node::d2q9_weights[dir];
-
-
-        site.f_density[dir] += (equilib - site.f_density[dir])/tau;
-      }
-
+    std::vector<double> equil_f(site.equilibrium());
+    for(int dir = 0; dir < NUM_WEIGHTS_; ++dir) {
+      site.f_density[dir] = (1 - omega_)*site.f_density[dir] 
+                                       + omega_*equil_f[dir];
+    }
   }
-
   return;
 }
 
